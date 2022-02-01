@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>BOA</title>
+
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:400,700|Material+Icons"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css"/>
+    
+    <link href="vendor/material-kit/css/material-kit.css?v=2.0.5" rel="stylesheet"/>
+    
+    <link rel="stylesheet" href="vendor/jkanban/jkanban.min.css" />
+
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet"/>
+
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <script src="./process.js"></script>
+    <script src="./services.js"></script>
+    <script src="./compose.js"></script>
+    <script src="./search.js"></script>
+    <script src="./boards.js"></script>
+    <script src="./discover.js"></script>
+    <script src="./server.js"></script>
+    <script src="./strings.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"> </script>
+    <script src="https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/vkbeautify/vkbeautify.0.99.00.beta.js"></script>
+
+    
+
+    <style>
+      body {
+        font-family: "Lato";
+        margin: 0;
+        padding: 0;
+      }
+
+      #myKanban {
+        overflow-x: auto;
+        padding: 20px 0;
+      }
+
+      .success {
+        background: #00b961;
+      }
+
+      .info {
+        background: #2a92bf;
+      }
+
+      .warning {
+        background: #f4ce46;
+      }
+
+      .error {
+        background: #fb7d44;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hidden-div"></div>
+
+      <nav class="navbar navbar-expand-lg bg-primary" style="background-color: #a14c8cb9;">
+        <div class="container">
+          <div class="navbar-translate">
+            <a class="navbar-brand" href="#0" style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; font-size:x-large;">BOA Suite</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" aria-expanded="true" aria-label="Toggle navigation" style="font-family: 'Times New Roman', Times, serif;">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="navbar-toggler-icon"></span>
+              <span class="navbar-toggler-icon"></span>
+              <span class="navbar-toggler-icon"></span>
+            </button>
+
+          </div>
+            <button id="language-toggle" style="position: absolute; right: 0; width: fit-content; margin-right: 100pt; background-color: #51686c; color: #FFFFFF;" onclick="select_language()">PT</button>
+          </div>
+        </div>
+      </nav>
+    <div id="myKanban"></div>
+
+
+  <!--  BOTAO DE ENVIO DO XPDL  -->
+	<div class="input-group mb-3" style="display: none;">
+	  <div class="input-group-prepend">
+	    <span class="input-group-text" id="inputGroupFileAddon01">Upload</span>
+	  </div>
+	  <div class="custom-file" style="display: none;">
+      <form id="xmlForm" name="xmlForm" enctype="multipart/form-data" onsubmit="return false">
+          <input id="input" type="file" accept=".xpdl" name="file"> <input type="submit" id='arquivoOK'>
+    	</form>
+	  </div>
+  </div>
+
+  
+<!-- TESTE
+  <form method="post" action="/upload" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <input type="submit" />
+  </form>
+-->
+  
+
+<!--  CRIAR POP-UP PARA PUBLICACAO  -->
+  <button class="open-button" onclick="openForm()">Open Form</button>
+
+  <div class="form-popup" id="myForm">
+    <div class="draggable-header" id="myFormHeader">BOA Suite</div>
+    <form id='popupForm' class="form-container" onsubmit="return false">
+      <h1>Publicação</h1>
+
+      <p id='popupForm_p1'>Deseja publicar o seguinte .xpdl?</p>
+      <p id="nome_xpdl"></p>
+
+      <button type="button" class="btn" onclick="aceitarXpdl()">Aceitar</button>
+      <button type="button" class="btn cancel" onclick="closeForm()">Cancelar</button>
+    </form>
+  </div>
+
+  <div class="form-popup" id="div-header" >
+    <div class="draggable-header" id="div-headerHeader">Informações do Processo</div>
+    <form id='form-header' class="form-container">
+      
+    </form>
+  </div>
+
+  <script>
+    //Make the DIV element draggagle:
+    dragElement(document.getElementById("myForm"));
+    dragElement(document.getElementById("div-header"));
+    
+    function dragElement(elmnt) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      if (document.getElementById(elmnt.id + "Header")) {
+        /* if present, the header is where you move the DIV from:*/
+        document.getElementById(elmnt.id + "Header").onmousedown = dragMouseDown;
+      } else {
+        /* otherwise, move the DIV from anywhere inside the DIV:*/
+        elmnt.onmousedown = dragMouseDown;
+      }
+    
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+    
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+    
+      function closeDragElement() {
+        /* stop moving when mouse button is released:*/
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+    //HIGHLIGHT SELECTED ITEM KANBAN
+    $("descoberta").on('click', 'kanban-item', function(e) {
+        $(this).parent().find('kanban-item.active').removeClass('active');
+        if(this.hasClass("kanban-item")) (this).addClass('active');
+    });
+
+    </script>
+
+
+  <!--
+    <script>
+	  const fileSelector = document.getElementById('file');
+	  fileSelector.addEventListener('change', (event) => {
+	    const fileList = event.target.files;
+	    console.log(fileList);
+	  });
+	</script>
+  -->
+	
+
+	<script>
+    
+ 
+    function sendAjax( dataS){
+      var formData = new FormData();
+      formData.append('file', dataS);
+
+      $.ajax({
+          url: '/',
+          data: formData,
+          contentType: false,
+          processData: false,
+          type: 'POST',
+          'success':function(data){
+              alert(data);
+          }
+      });
+    }
+
+
+
+    //TENTATIVA USANDO POST
+    function sendPost( dataS){
+      var form = req.form();
+      form.append('file', dataS);
+
+      const request = require('request');
+      
+      var req = request.post('/', function (err, resp, body) {
+      if (err) {
+        console.log('Error!');
+      } else {
+        console.log('URL: ' + body);
+      }
+    });
+    
+    }
+
+  //TENTATIVA USANDO FETCH
+    function sendFetch( dataS){
+      var formData = new FormData();
+      formData.append('file', dataS);
+
+      fetch('/',{
+        method: "POST",
+        body: dataS
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data.path)
+      })
+      .catch(error => {
+        console.error(error)
+      })
+    }
+       
+
+    </script>
+
+    <script src="vendor/jkanban/jkanban.min.js"></script>
+    
+    <script>
+
+      var language_toggle_div = document.getElementById("language-toggle");
+      
+      var langSelector = getCookie("lang");
+      console.log(langSelector)
+
+      if(langSelector == "") langSelector = 0;
+      
+      if(langSelector == 1) language_toggle_div.innerHTML = "EN";
+
+      function select_language(){
+        console.log("Mudando Lingua");
+      
+        if( langSelector == 0){
+          langSelector = 1;
+          language_toggle_div.innerHTML = "EN"
+        }
+        else{
+          langSelector = 0;
+          language_toggle_div.innerHTML = "PT"
+        }
+        
+        setCookie("lang", langSelector, 90);
+
+        location.reload()
+      }
+
+      function setCookie(cname,cvalue,exdays) {
+        const d = new Date();
+        d.setTime(d.getTime() + (exdays*24*60*60*1000));
+        let expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + "," + expires + ",";
+        console.log(document.cookie)
+      }
+
+      function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(',');
+        for(let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+          }
+          if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+          }
+        }
+        return "";
+      }
+
+      console.log(boards)
+      var boards2 = boards;
+      var KanbanTest = new jKanban({
+        element: "#myKanban",
+        widthBoard: '450px',
+        responsivePercentage: true,  
+        dragBoards: false,
+        dragItems: false,
+
+        click: function(el) {
+          console.log("Trigger on all items click!");
+          console.log(el);
+          if(el.getAttribute('data-class') == "discovery-item"){
+            console.log("Item da Descoberta");
+
+            var previous = document.getElementsByClassName("active")[0];
+            
+            if(previous != null){
+               previous.classList.remove('active');
+               console.log(previous.text);
+            }
+
+            el.classList.add('active');
+          }
+          if(el.getAttribute('data-process_id') != null){
+            console.log(el.getAttribute('data-process_id'));
+            // console.log(getProcessById(el.getAttribute('data-process_id')));
+
+            clearBoard();
+            // clearDiscover();
+
+            // populateWithProcesses();
+//             $(".nav-sidebar").on('click', 'li', function(e) {
+//     $(this).parent().find('li.active').removeClass('active');
+//     $(this).addClass('active');
+// });
+          // el.parent().find('.active').removeClass('active');
+          // el.addClass('active');
+
+
+            populateCompositionListWithProcess(getProcessById(el.getAttribute('data-process_id')), services);
+            populateProcessListWithProcess(getProcessById(el.getAttribute('data-process_id')), services);
+            decorateList();
+            
+          }
+          if(el.getAttribute('data-wsdl') != null){
+            console.log(el.getAttribute('data-wsdl'));
+
+            
+
+            var wsdlName = el.getAttribute('data-wsdl');
+
+            var div = document.getElementById("hidden-div");
+
+            var link = document.createElement('a');
+            link.setAttribute('href', './download/:' + wsdlName);
+            link.setAttribute("type", "hidden");
+            div.appendChild(link);
+            
+            link.click();
+          }
+          
+        },
+        buttonClick: function(el, boardId) {
+          console.log(el);
+          console.log(boardId);
+          // create a form to enter element
+          var formItem = document.createElement("form");
+          formItem.setAttribute("class", "itemform");
+          formItem.innerHTML =
+            '<div class="form-group"><textarea class="form-control" rows="2" autofocus></textarea></div><div class="form-group"><button type="submit" class="btn btn-primary btn-xs pull-right">' + strings[langSelector].submit + '</button><button type="button" id="CancelBtn" class="btn btn-default btn-xs pull-right">' + strings[langSelector].cancel + '</button></div>';
+          KanbanTest.addForm(boardId, formItem);
+          formItem.addEventListener("submit", function(e) {
+            e.preventDefault();
+            var text = e.target[0].value;
+            KanbanTest.addElement(boardId, {
+              title: text
+            });
+            formItem.parentNode.removeChild(formItem);
+          });
+          document.getElementById("CancelBtn").onclick = function() {
+            formItem.parentNode.removeChild(formItem);
+          };
+        },
+        addItemButton: false,
+        boards: [
+        {
+          id: "_publish",
+          title: strings[langSelector].pub,
+          class: "publicação",
+          dragTo: ["_working"],
+          item: [
+            {
+              title: "<button style=\"text-align:center; right: 5px; margin: 0 auto;\" class=\"btn btn-primary btn-fab btn-round\"><i class=\"material-icons\">add</i> </button>" + strings[langSelector].click_add,
+              click: function(el) {
+                getFile();
+              // 	process.push(adcEl);
+
+              // 	console.log(adcEl.header.name)
+
+              // 	alert("Publicando processos");
+
+              // 	console.log(process[4].header.name);
+
+              // 	console.log(el.getAttribute('data-process_id'));
+	            // console.log(getProcessById(el.getAttribute('data-process_id')));
+
+	            // clearBoard();
+	            // clearDiscover();
+
+	            // populateWithProcesses();
+
+              //   alert("Os processos foram publicados!");
+              }
+            }
+          ]
+        },
+        {
+          id: "_discover",
+          title: strings[langSelector].dsc + "<form style=\"text-align:center; margin: 10px;\" class=\"form ml-auto\"> <div class=\"form-group\"> <input id=\"searchForm\" type=\"text\" class=\"form-control\" onkeyup=\"search()\" placeholder=" + strings[langSelector].procurar_processo +"> </div><button type=\"submit\" class=\"btn btn-white btn-raised btn-fab btn-round\"> <i class=\"material-icons\">search</i> </button> </form>",
+          class: "descoberta",
+        },
+        {
+          id: "_full_process",
+          title: strings[langSelector].atv,
+          class: "atividades",
+          dragTo: ["_working"],
+          item: []
+        },
+        {
+          id: "_compose",
+          title: strings[langSelector].cmp,
+          class: "composição",
+          dragTo: ["_working"],
+          item: []
+        }
+      ]
+      });
+
+      function closeForm() {
+        //var inputForm = $("input");
+        var inputForm = document.getElementById('input').value = '';
+
+        //inputForm.replaceWith( inputForm.val('').clone( true ) );
+
+        //document.getElementById('popupForm').innerHTML='';
+
+        document.getElementById("myForm").style.display = "none";        
+      }
+
+      var ativ;
+      var bpdl;
+      var xpdl;
+      var processElem;
+      var atividades = [];
+
+      var wsdls = [];
+      var nomes = [];
+
+      var serviços = [];
+
+      var wsdl;
+
+      var ul;
+
+      var nomeP;
+      var autorP;
+      var versaoP;
+      var nomeXpdl;
+
+      var totalWSDL;
+
+      $('#xmlForm').submit(function(event) {
+        //event.preventDefault();
+
+        console.log("Submit!!!")
+
+        bpdl = document.implementation.createDocument("", "", null);
+        ativ = parseFile(document.getElementById('input').files[0]);
+        processElem = bpdl.createElement("Processo");
+        bpdl.appendChild(processElem); 
+
+        console.log(ativ);
+        //console.log(JSON.stringify(bpdl, null, 4));
+
+      });
+
+      function aceitarXpdl() {
+        document.getElementById('arquivoOK').click();
+
+        xpdl = document.getElementById('input').files[0];
+        //document.getElementById('xmlForm').submit;
+
+        //document.getElementById("myForm").style.display = "none";
+        //document.getElementById("myForm2").style.display = "block";
+
+        //document.getElementById('popupForm_p1').innerHTML = 'Selecione as atividades que quer publicar';
+        document.getElementById('popupForm').innerHTML =
+        '<h1>' + strings[langSelector].pub + '</h1>'+
+        '<h2>' + strings[langSelector].passo1_titulo + '</h2>'+
+        '<p>' + strings[langSelector].passo1_desc + '</p>'+
+        '<label for="title"><b>' + strings[langSelector].passo1_insiraTitulo + '</b></label>' +
+        '<input type="text" placeholder="' + strings[langSelector].titulo + '" id="title" required>'+
+        '<label for="author"><b>' + strings[langSelector].passo1_insiraAutor + '</b></label>' +
+        '<input type="text" placeholder="' + strings[langSelector].autor + '" id="author" required>'+
+        '<label for="version"><b>' + strings[langSelector].passo1_insiraVersao + '</b></label>' +
+        '<input type="text" placeholder="' + strings[langSelector].versao + '" id="version" required>'+
+        '<label for="description"><b>' + strings[langSelector].passo1_insiraDesc + '</b></label>' +
+        '<textarea id = "description"  placeholder="' + strings[langSelector].passo1_insiraDesc + '"></textarea>'+
+        '<button type="submit" class="btn" onclick="aceitarHeader()">' + strings[langSelector].nxt + '</button>'+
+        '<button type="button" class="btn cancel" onclick="closeForm()">' + strings[langSelector].cancel + '</button>';
+      }
+
+      function parseFile(selectedFile) {
+        var readXml=null;
+
+        console.log("Imprimindo atividade");
+
+        console.log(selectedFile);
+
+        var readerP = new FileReader();
+        readerP.onload = function(e) {
+          e.preventDefault();
+
+          console.log("Imprimindo atividade");
+
+          readXml=e.target.result;
+          console.log(readXml);
+
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(readXml, "application/xml");
+          console.log(doc);
+          console.log(typeof readXml);
+          console.log(typeof doc);
+          
+          var nodes = doc.getElementsByTagName("Activity");
+          console.log(nodes[0]);
+          console.log(nodes[0].getAttribute("Id"));
+                  
+
+          console.log(nodes);
+
+          ativ = nodes;
+
+          return nodes;
+        }
+      readerP.readAsText(selectedFile);
+      }
+
+      //FUNCAO PARA BOTAO SELECIONAR TODOS
+      $(document).ready(function () {
+        $('body').on('click', '#selectAll', function () {
+          if ($(this).hasClass('allChecked')) {
+              $('input[type="checkbox"]', '#ul').prop('checked', false);
+          } else {
+              $('input[type="checkbox"]', '#ul').prop('checked', true);
+          }
+          $(this).toggleClass('allChecked');
+        })
+      });
+
+      function addElement(e, ulParent, nomeAtiv){
+        var fileN = document.createElement("input");
+        var nomeN = document.createElement("input");
+        fileN.type = "file";
+
+        console.log(ulParent);
+
+        serviços.push({
+          wsdl:fileN,
+          nome:nomeN,
+          atividade:nomeAtiv
+        })
+
+        var item = document.createElement('li');
+        item.appendChild(fileN);
+        ulParent.appendChild(item);
+
+        var item = document.createElement('li');
+        item.appendChild(nomeN);
+        ulParent.appendChild(item);
+        
+        fileN.onchange = addElement;
+
+      }
+
+	function fazerRequired() {
+		if(this.value != "") serviços[parseInt(this.id)].wsdl.required = true;
+		else serviços[parseInt(this.id)].wsdl.required = false;
+
+		console.log(this.value);
+		console.log(serviços[parseInt(this.id)].wsdl.required);
+	}
+
+  function addElementE(){
+    var fileN = document.createElement("input");
+    var nomeN = document.createElement("input");
+
+
+    var wsdlLabelN = document.createElement("Label");
+    var nomeLabelN = document.createElement("Label");
+
+    wsdlLabelN.setAttribute("for", fileN);
+    nomeLabelN.setAttribute("for", nomeN);
+
+    wsdlLabelN.innerHTML = string[langSelector].select_language;
+    nomeLabelN.innerHTML = string[langSelector].digite_nome;
+
+    console.log(this.id);
+    console.log(this.id + 1);
+    console.log(parseInt(this.id) - 1);
+    console.log(this.files[parseInt(this.id) - 1]);
+    console.log(this.files.length);
+    console.log(serviços.length);
+
+    if(this.files[parseInt(this.id)] != null){
+      serviços[parseInt(this.id)].nome.required = true;
+      serviços[parseInt(this.id)].nome.placeholder = this.files[parseInt(this.id)].name;
+    }
+		else serviços[parseInt(this.id)].nome.required = false;
+		
+		console.log(this.files[0]);
+		console.log(serviços[parseInt(this.id)].nome.required);
+
+
+
+        fileN.type = "file";
+        fileN.name = this.name;
+        fileN.id = parseInt(serviços.length);
+
+        nomeN.id = parseInt(serviços.length);
+
+        ulParent = document.getElementById(this.name);
+
+        nomeN.placeholder = strings[langSelector].no_file;
+
+        serviços.push({
+          wsdl:fileN,
+          nome:nomeN,
+          atividade:this.name
+        })
+
+        // var item = document.createElement('li');
+        // item.appendChild(serviços[(serviços.length - 1)].wsdl);
+        // ulParent.appendChild(item);
+
+        // var item = document.createElement('li');
+        // item.appendChild(serviços[(serviços.length - 1)].nome);
+		// ulParent.appendChild(item);
+		
+    ulParent.appendChild(wsdlLabelN);
+		ulParent.appendChild(serviços[(serviços.length - 1)].wsdl);
+    ulParent.appendChild(nomeLabelN);
+		ulParent.appendChild(serviços[(serviços.length - 1)].nome);
+        
+      fileN.onchange = addElementE;
+      nomeN.onchange = fazerRequired;
+
+    }
+
+    function aceitarWSDLs() {
+
+      for( let i = 0; i < serviços.length; i++){
+        console.log( (serviços[i].nome.required || serviços[i].wsdl.required) && (serviços[i].nome.value == "" || serviços[i].wsdl.files[0] == null) );
+        console.log( serviços[i].nome.required);
+        console.log( serviços[i].wsdl.required == true);
+        console.log( (serviços[i].nome.value == "" || serviços[i].wsdl.files[0] == null) );
+        if( (serviços[i].nome.required || serviços[i].wsdl.required) && (serviços[i].nome.value == "" || serviços[i].wsdl.files[0] == null) ) return;
+      }
+
+				
+        for( let i = 0; i < serviços.length; i++){
+          if( serviços[i].nome.value != ""){
+            // serviços.wsdl
+
+            console.log( serviços[i].wsdl.files[0]);
+            console.log( serviços[i].nome.value);
+            console.log( serviços[i].atividade);
+
+            wsdlElem = bpdl.createElement("Wsdl");
+            wsdlElem.setAttribute("nome", serviços[i].nome.value);
+            wsdlElem.innerHTML = serviços[i].wsdl.value.split(/(\\|\/)/g).pop();
+
+            console.log('[nome="'+serviços[i].atividade+'"]');
+
+            processElem.querySelector('[nome="'+serviços[i].atividade+'"]').appendChild(wsdlElem);
+
+            var formData = new FormData();
+            formData.append('file', serviços[i].wsdl.files[0]);
+
+            $.ajax({
+                url: '/',
+                data: formData,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                'success':function(data){
+                    alert(data);
+                }
+            });
+          }
+        }
+
+        document.getElementById('popupForm').innerHTML=
+          '<h1>' + strings[langSelector].pub + '</h1>'+
+          '<p>' + strings[langSelector].wait_fin + '</p>';
+
+        finalizarPublicação();
+      }
+
+      function aceitarAtividadesPublicas(){
+
+        var atividadesPublicas = document.querySelectorAll('input[type=checkbox]');
+        var atividadesElem = bpdl.createElement("Atividades");
+
+        document.getElementById('popupForm').innerHTML=
+          '<h1>' + strings[langSelector].dsc + '</h1>'+
+          '<h2>' + strings[langSelector].passo4 + '</h2>'+
+          '<p>' + strings[langSelector].passo4_desc1 + '</p>'+
+          '<p>' + strings[langSelector].passo4_desc2 + '</p>' +
+          '<p>' + strings[langSelector].passo4_desc3 + '</p>' +
+          '<p>' + strings[langSelector].passo4_desc4 + '</p>' +
+          '<div id="lista-serviços">' +
+          '</div>' +
+          '<button type="submit" class="btn" onclick="aceitarWSDLs()">' + strings[langSelector].nxt + '</button>'+
+          '<button type="button" class="btn cancel" onclick="closeForm()">' + strings[langSelector].cancel + '</button>';
+          
+            totalWSDL = atividadesPublicas.length;
+
+        for (var i = 0; i < atividadesPublicas.length; i++) {
+          console.log(atividadesPublicas[i].value + " " + atividadesPublicas[i].checked);
+          if(atividadesPublicas[i].checked){
+            console.log(atividades[i].name);
+            atividades[i].public = true;
+
+            var div = document.getElementById("lista-serviços");
+
+            var para = document.createElement("p");
+            var node = document.createTextNode( strings[langSelector].atividade + " " + i + ": " + atividades[i].name);
+            para.classList.add("nome-interface")
+            para.appendChild(node);
+
+            div.appendChild(para);
+
+            ul = document.createElement("div");
+            // ul.setAttribute('id', atividades[i].name);
+            ul.id = atividades[i].name;
+            div.appendChild(ul);
+
+            var wsdl = document.createElement("input");
+            var nome = document.createElement("input");
+            
+            nome.placeholder = strings[langSelector].no_file;
+
+            var wsdlLabel = document.createElement("Label");
+            var nomeLabel = document.createElement("Label");
+
+            wsdlLabel.setAttribute("for", wsdl);
+            nomeLabel.setAttribute("for", nome);
+
+            wsdlLabel.innerHTML = strings[langSelector].selecione_arq;
+            nomeLabel.innerHTML = strings[langSelector].digite_nome;
+
+            wsdl.type = "file";
+            wsdl.name = atividades[i].name;
+
+            // wsdls.push(wsdl);
+            // nomes.push(nome);
+
+            serviços.push({
+              wsdl:wsdl,
+              nome:nome,
+              atividade: atividades[i].name
+            })
+
+            serviços[(serviços.length - 1)].wsdl.id = parseInt((serviços.length - 1));
+            serviços[(serviços.length - 1)].nome.id = parseInt((serviços.length - 1));
+
+            // var item = document.createElement('li');
+            // item.appendChild(serviços[(serviços.length - 1)].wsdl);
+            // ul.appendChild(item);
+            ul.appendChild(wsdlLabel);
+            ul.appendChild(serviços[(serviços.length - 1)].wsdl);
+            
+
+            // var item = document.createElement('li');
+            // item.appendChild(serviços[(serviços.length - 1)].nome);
+            // ul.appendChild(item);
+            ul.appendChild(nomeLabel);
+            ul.appendChild(serviços[(serviços.length - 1)].nome);
+            
+
+            var nomeAtividade = atividades[i].name;
+
+            // wsdl.onchange = function () {
+            //   var nomeAtiv = nomeAtividade;
+            //   var 
+            //   addElement( wsdl, ul, nomeAtividade);
+            // };
+
+            wsdl.onchange = addElementE;
+            nome.onchange = fazerRequired;
+          }
+
+          var ativElem = bpdl.createElement("Atividade");
+          ativElem.setAttribute("nome", atividades[i].name);
+          ativElem.setAttribute("id", atividades[i].id);
+          ativElem.setAttribute("público", atividades[i].public);
+
+          atividadesElem.appendChild(ativElem);
+
+        }
+
+        processElem.appendChild(atividadesElem);
+
+        
+      }
+
+      //ULTIMO PASSO DA PUBLICACAO
+      function finalizarPublicação(){
+
+        var XMLS = new XMLSerializer();
+        var bpdl_xmls = XMLS.serializeToString(processElem);
+        vkXML = vkbeautify.xml(bpdl_xmls);
+
+        console.log(vkXML);
+        console.log(typeof vkXML);
+
+        //var blob = new Blob(vkXML, {type: 'plain/text'});
+        var file = new File([vkXML], nomeP + "_V"+ versaoP+".bpdl", {type: "text/plain"});
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        $.ajax({
+            url: '/',
+            data: formData,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            'success':function(data){
+                alert(data);
+            }
+        });
+
+        var formData = new FormData();
+        formData.append('file', xpdl);
+
+        $.ajax({
+            url: '/',
+            data: formData,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            'success':function(data){
+                alert(data);
+            }
+        });
+
+        document.getElementById('popupForm').innerHTML=
+          '<h1>' + strings[langSelector].fin_pub + '</h1>'+
+          '<p>' + strings[langSelector].fin_par1 + '</p>' +
+          '<p>' + strings[langSelector].fin_par2 + '</p>' +
+          '<p>' + strings[langSelector].fin_par3 + '</p>' +
+          '<button type="button" class="btn" onclick="refresh()">' + strings[langSelector].finish + '</button>';
+
+        }
+
+
+
+      function refresh(){
+        document.getElementById("myForm").style.display = "none";
+
+        clearBoard();
+        clearDiscover();
+
+        populateWithProcesses();
+
+        location.reload();
+        return false;
+      }
+
+      function aceitarAtividades() {
+        var checkboxes = document.querySelectorAll('input[type=checkbox]')
+
+        document.getElementById('popupForm').innerHTML=
+          '<h1>' + strings[langSelector].pub + '</h1>'+
+          '<h2>' + strings[langSelector].passo3 + '</h2>'+
+          '<p>' + strings[langSelector].passo3_par1 + '</p>' +
+          '<button type="button" id="selectAll" class="main"> <span class="sub"></span>' + strings[langSelector].select_all + '</button>' +
+          '<ul id="ul">'+
+          '</ul>'+
+          '<button type="submit" class="btn" onclick="aceitarAtividadesPublicas()">' + strings[langSelector].nxt + '</button>'+
+          '<button type="button" class="btn cancel" onclick="closeForm()">' + strings[langSelector].cancel + '</button>';
+
+        var list = document.getElementById('ul');
+        var negados = [];
+
+        for (var i = 0; i < checkboxes.length; i++) {
+          console.log(checkboxes[i].value + " " + checkboxes[i].checked);
+          if(checkboxes[i].checked) console.log(atividades[i].name);
+          if(!checkboxes[i].checked) negados.push(i);
+        }
+
+        if(negados.length > 0){
+          for (var i = 0; i < negados.length; i++) {
+            atividades.splice(negados[i] - i,1);
+          }
+        }
+
+        for( let i = 0; i < atividades.length; i++){
+          var item = document.createElement('li');
+          var checkBox = document.createElement("input");
+          var label = document.createElement("label");
+
+          checkBox.type = "checkbox";
+          checkBox.value = atividades[i].name;
+
+          item.appendChild(checkBox);
+          item.appendChild(document.createTextNode("  "+atividades[i].name));
+          list.appendChild(item);          
+        }
+      }
+
+      const aceitarHeader = async () => {
+        nomeP = document.getElementById('title').value;
+        autorP = document.getElementById('author').value;
+        versaoP = document.getElementById('version').value;
+        var descriçãoP = document.getElementById('description').value;
+
+        var currentdate = new Date(); 
+        var datetime = currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+
+        if(nomeP != '' && autorP != ''){
+          
+          console.log(nomeP);
+          console.log(autorP);
+          console.log(versaoP);
+          console.log(descriçãoP);
+
+          var processInfoElem = bpdl.createElement("ProcessoInfo");
+
+          var nomeElem = bpdl.createElement("Nome");
+          nomeElem.innerHTML = nomeP;
+          processInfoElem.appendChild(nomeElem);
+
+          var autorElem = bpdl.createElement("Autor");
+          autorElem.innerHTML = autorP;
+          processInfoElem.appendChild(autorElem);
+
+          var versaoElem = bpdl.createElement("Versão");
+          versaoElem.innerHTML = versaoP;
+          processInfoElem.appendChild(versaoElem);
+
+          var dataElem = bpdl.createElement("Data");
+          dataElem.innerHTML = datetime;
+          processInfoElem.appendChild(dataElem);
+
+          var descricaoElem = bpdl.createElement("Descrição");
+          descricaoElem.innerHTML = descriçãoP;
+          processInfoElem.appendChild(descricaoElem);
+
+          var xpdlElem = bpdl.createElement("Xpdl");
+          xpdlElem.innerHTML = nomeXpdl;
+          processInfoElem.appendChild(xpdlElem);
+
+          processElem.appendChild(processInfoElem);
+
+          console.log(bpdl.documentElement.innerHTML);
+
+          console.log(ativ);
+
+          //const ativ = await parseFile(document.getElementById('input').files[0]);
+
+          console.log(ativ[0]);
+          console.log(ativ[0].getAttribute("Id"));
+
+          document.getElementById('popupForm').innerHTML=
+          '<h1>' + strings[langSelector].pub + '</h1>'+
+          '<h2>' + strings[langSelector].passo2 + '</h2>'+
+          '<p>' + strings[langSelector].passo2_par1 + '</p>' +
+          '<button type="button" id="selectAll" class="main"> <span class="sub"></span>' + strings[langSelector].select_all + '</button>' +
+          '<ul id="ul">'+
+          '</ul>'+
+          '<button type="submit" class="btn" onclick="aceitarAtividades()">' + strings[langSelector].nxt + '</button>'+
+          '<button type="button" class="btn cancel" onclick="closeForm()">' + strings[langSelector].cancel + '</button>';
+
+          var list = document.getElementById('ul');
+          var popupForm = document.getElementById('popupForm');
+
+          for( let i = 0; i < ativ.length; i++){
+            var n = ativ[i];
+
+            route = n.getElementsByTagName('Route');
+            event = n.getElementsByTagName('Event');
+
+            if(n.getAttribute("Name") != "" && route.length == 0 && event.length == 0){
+              ativId = n.getAttribute("Id");
+              ativName = n.getAttribute("Name");
+
+              console.log(i);
+              console.log(ativId);
+              console.log(ativName);
+              console.log(route);
+              if(route.length > 0) console.log(route[0].getAttribute('MarkerVisible'))
+
+              atividades.push({
+                  id: ativId,
+                  name: ativName,
+                  public: false
+              });
+
+              var item = document.createElement('li');
+              var checkBox = document.createElement("input");
+              var label = document.createElement("label");
+
+              checkBox.type = "checkbox";
+              checkBox.value = ativName;
+
+              // popupForm.appendChild(checkBox);
+              // popupForm.appendChild(label);
+              // label.appendChild(document.createTextNode(ativName));
+
+              item.appendChild(checkBox);
+              item.appendChild(document.createTextNode("  "+ativName));
+              list.appendChild(item);
+              
+              
+            }
+          }
+
+        } 
+      }
+
+             
+
+
+      function getFile(){
+        document.getElementById('input').click();
+        //document.getElementById("xmlForm").submit();
+      }
+
+      //Abre o popup
+      document.getElementById('input').onchange = function() {
+        var inputForm = document.getElementById('input');
+
+        if( inputForm.value != null){
+
+          document.getElementById('popupForm').innerHTML=
+          '<h1>' + strings[langSelector].pub + '</h1>'+
+          '<p>' + strings[langSelector].pub_conf + '</p>' +
+          '<p>'+ inputForm.files[0].name +'</p>'+
+
+          '<button type="submit" class="btn" onclick="aceitarXpdl()">' + strings[langSelector].nxt + '</button>'+
+          '<button type="button" class="btn cancel" onclick="closeForm()">' + strings[langSelector].cancel + '</button>';
+
+          document.getElementById("myForm").style.display = "block";
+
+        }
+        nomeXpdl = document.getElementById('input').files[0].name;
+        //alert(document.getElementById('input').files[0].name);
+        
+        
+        //document.getElementById('input').submit();
+      };
+
+      var toDoButton = document.getElementById("addToDo");
+      toDoButton.addEventListener("click", function() {
+        KanbanTest.addElement("_todo", {
+          title: "Test Add"
+        });
+      });
+
+      var addBoardDefault = document.getElementById("addDefault");
+      addBoardDefault.addEventListener("click", function() {
+        KanbanTest.addBoards([
+          {
+            id: "_default",
+            title: "Kanban Default",
+            item: [
+              {
+                title: "Default Item"
+              },
+              {
+                title: "Default Item 2"
+              },
+              {
+                title: "Default Item 3"
+              }
+            ]
+          }
+        ]);
+      });
+
+    </script>
+    <script>
+    populateWithProcesses();
+    decorateList();
+    
+    //var json = JSON.parse(process)
+    console.log(process.header.name);
+    console.log(document.querySelectorAll("[data-process]"));
+    hideAll();
+
+
+
+    
+    var list = document.getElementById("myList");
+    //list.removeChild(list.childNodes[0]);
+
+    //console.log(process.getJSONObject("header").getString("author"))
+
+    </script>
+
+
+
+  </body>
+</html>
